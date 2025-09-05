@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G Validator Admin - Testnet</title>
+    <!-- Using stable Web3.js v1.10.0 -->
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .test-badge {
+            display: inline-block;
+            background: #10b981;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .contract-info {
+            background: #10b981;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .contract-address {
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            word-break: break-all;
+        }
+        
+        .wallet-status {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #666;
+        }
+        
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-connect {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        
+        .message {
+            padding: 12px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #2a5298;
+        }
+        
+        .tab-panel {
+            display: none;
+        }
+        
+        .tab-panel.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>0G Validator Administration <span class="test-badge">TESTNET</span></h1>
+            <p>Deployed on 0G Galileo Testnet</p>
+        </div>
+        
+        <div class="contract-info">
+            <h3>📝 MockStaking Contract</h3>
+            <div class="contract-address">0x5BE099336263bdbb92Cc6291c0e668daA2d84056</div>
+            <div style="margin-top: 10px;">
+                <a href="https://chainscan-galileo.0g.ai/address/0x5BE099336263bdbb92Cc6291c0e668daA2d84056" target="_blank" style="color: white;">View on Explorer →</a>
+            </div>
+        </div>
+        
+        <div class="wallet-status">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Wallet Status</h3>
+                <button class="btn btn-connect" onclick="connectWallet()">Connect Wallet</button>
+            </div>
+            <div id="walletInfo" style="margin-top: 15px; display: none;">
+                <p>Address: <span id="walletAddress"></span></p>
+                <p>Balance: <span id="balance"></span></p>
+                <p>Network: <span id="network"></span></p>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('create')">Create Validator</button>
+            <button class="tab-btn" onclick="switchTab('transfer')">Transfer Ownership</button>
+            <button class="tab-btn" onclick="switchTab('check')">Check Owner</button>
+            <button class="tab-btn" onclick="switchTab('query')">Query Validator</button>
+        </div>
+        
+        <div class="panel">
+            <!-- Create Validator Tab -->
+            <div id="create-tab" class="tab-panel active">
+                <h2 style="margin-bottom: 20px;">Create New Validator</h2>
+                
+                <div class="form-group">
+                    <label>Moniker (Name)</label>
+                    <input type="text" id="moniker" placeholder="My Validator" value="Test Validator">
+                </div>
+                
+                <div class="form-group">
+                    <label>Commission Rate (%)</label>
+                    <input type="number" id="commissionRate" value="10" min="0" max="100">
+                </div>
+                
+                <div class="form-group">
+                    <label>Public Key (48 bytes hex)</label>
+                    <input type="text" id="pubkey" placeholder="0x...">
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="generatePubkey()">Generate Random</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Signature (96 bytes hex)</label>
+                    <textarea id="signature" placeholder="0x..." rows="3"></textarea>
+                    <button class="btn btn-secondary" style="margin-top: 10px;" onclick="generateSignature()">Generate Random</button>
+                </div>
+                
+                <div class="form-group">
+                    <label>Future Owner Address</label>
+                    <input type="text" id="futureOwner" placeholder="0x...">
+                </div>
+                
+                <button class="btn btn-primary" onclick="createValidator()">Create Validator (0.1 ETH)</button>
+                <div id="createMessage" class="message"></div>
+            </div>
+            
+            <!-- Transfer Ownership Tab -->
+            <div id="transfer-tab" class="tab-panel">
+                <h2 style="margin-bottom: 20px;">Transfer Validator Ownership</h2>
+                
+                <div class="form-group">
+                    <label>Validator Contract Address</label>
+                    <input type="text" id="validatorAddress" placeholder="0x...">
+                </div>
+                
+                <div class="form-group">
+                    <label>New Owner Address</label>
+                    <input type="text" id="newOwner" placeholder="0x...">
+                </div>
+                
+                <button class="btn btn-primary" onclick="transferOwnership()">Transfer Ownership</button>
+                <div id="transferMessage" class="message"></div>
+            </div>
+            
+            <!-- Check Owner Tab -->
+            <div id="check-tab" class="tab-panel">
+                <h2 style="margin-bottom: 20px;">Check Validator Ownership</h2>
+                
+                <div class="form-group">
+                    <label>Validator Contract Address</label>
+                    <input type="text" id="checkValidatorAddress" placeholder="0x...">
+                </div>
+                
+                <button class="btn btn-primary" onclick="checkOwner()">Check Owner</button>
+                
+                <div id="ownershipResult" style="margin-top: 20px; padding: 20px; background: #f7f9fc; border-radius: 8px; display: none;">
+                    <h3 style="margin-bottom: 15px; color: #333;">Ownership Information</h3>
+                    <div style="display: grid; gap: 10px;">
+                        <div>
+                            <strong style="color: #666;">Validator Address:</strong>
+                            <span id="checkValidatorAddr" style="font-family: monospace; color: #2a5298;"></span>
+                        </div>
+                        <div>
+                            <strong style="color: #666;">Current Owner:</strong>
+                            <span id="currentOwnerAddr" style="font-family: monospace; color: #2a5298;"></span>
+                        </div>
+                        <div>
+                            <strong style="color: #666;">Initial Staker (Foundation):</strong>
+                            <span id="initialStakerAddr" style="font-family: monospace; color: #2a5298;"></span>
+                        </div>
+                        <div>
+                            <strong style="color: #666;">Staked Amount:</strong>
+                            <span id="stakedAmountValue" style="color: #10b981; font-weight: bold;"></span>
+                        </div>
+                        <div style="margin-top: 10px; padding: 10px; background: #eff6ff; border-radius: 6px;">
+                            <p style="font-size: 14px; color: #3730a3; margin: 0;">
+                                <strong>Note:</strong> The current owner controls validator operations. 
+                                The initial staker (foundation) retains control of the staked amount and is the only one who can withdraw it.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="checkOwnerError" class="message error" style="display: none;"></div>
+            </div>
+            
+            <!-- Query Tab -->
+            <div id="query-tab" class="tab-panel">
+                <h2 style="margin-bottom: 20px;">Query Validator Info</h2>
+                
+                <div class="form-group">
+                    <label>Validator Public Key or Address</label>
+                    <input type="text" id="queryInput" placeholder="0x...">
+                </div>
+                
+                <button class="btn btn-primary" onclick="queryValidator()">Query Validator</button>
+                <div id="queryResult" style="margin-top: 20px; padding: 15px; background: #f0f0f0; border-radius: 8px; display: none;">
+                    <pre id="queryOutput"></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Contract configuration
+        const STAKING_CONTRACT_ADDRESS = '0x5BE099336263bdbb92Cc6291c0e668daA2d84056';
+        const CHAIN_ID = 16601;
+        
+        // Minimal ABIs
+        const STAKING_ABI = [
+            {
+                "inputs": [
+                    {
+                        "components": [
+                            {"name": "moniker", "type": "string"},
+                            {"name": "identity", "type": "string"},
+                            {"name": "website", "type": "string"},
+                            {"name": "securityContact", "type": "string"},
+                            {"name": "details", "type": "string"}
+                        ],
+                        "name": "description",
+                        "type": "tuple"
+                    },
+                    {"name": "commissionRate", "type": "uint32"},
+                    {"name": "withdrawalFeeInGwei", "type": "uint96"},
+                    {"name": "pubkey", "type": "bytes"},
+                    {"name": "signature", "type": "bytes"}
+                ],
+                "name": "createAndInitializeValidatorIfNecessary",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"name": "pubkey", "type": "bytes"}],
+                "name": "computeValidatorAddress",
+                "outputs": [{"name": "", "type": "address"}],
+                "stateMutability": "pure",
+                "type": "function"
+            }
+        ];
+        
+        const VALIDATOR_ABI = [
+            {
+                "inputs": [{"name": "newOwner", "type": "address"}],
+                "name": "transferOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [{"name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "initialStaker",
+                "outputs": [{"name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "stakedAmount",
+                "outputs": [{"name": "", "type": "uint256"}],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+        
+        let web3 = null;
+        let currentAccount = null;
+        let stakingContract = null;
+        
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('Please install MetaMask!');
+                return;
+            }
+            
+            try {
+                // Request account access
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                currentAccount = accounts[0];
+                
+                // Initialize Web3
+                web3 = new Web3(window.ethereum);
+                
+                // Check network
+                const chainId = await web3.eth.getChainId();
+                if (chainId !== CHAIN_ID) {
+                    try {
+                        await ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x40d9' }], // 16601 in hex
+                        });
+                    } catch (switchError) {
+                        if (switchError.code === 4902) {
+                            await ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x40d9',
+                                    chainName: '0G-Galileo-Testnet',
+                                    nativeCurrency: {
+                                        name: 'OG',
+                                        symbol: 'OG',
+                                        decimals: 18
+                                    },
+                                    rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+                                    blockExplorerUrls: ['https://chainscan-galileo.0g.ai']
+                                }],
+                            });
+                        }
+                    }
+                }
+                
+                // Initialize contract
+                stakingContract = new web3.eth.Contract(STAKING_ABI, STAKING_CONTRACT_ADDRESS);
+                
+                // Update UI
+                document.getElementById('walletAddress').textContent = currentAccount;
+                const balance = await web3.eth.getBalance(currentAccount);
+                document.getElementById('balance').textContent = web3.utils.fromWei(balance, 'ether') + ' OG';
+                document.getElementById('network').textContent = '0G Galileo Testnet';
+                document.getElementById('walletInfo').style.display = 'block';
+                
+                console.log('Connected to wallet:', currentAccount);
+                
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                alert('Failed to connect wallet: ' + error.message);
+            }
+        }
+        
+        function switchTab(tab) {
+            // Update buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update panels
+            document.querySelectorAll('.tab-panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+        
+        function generatePubkey() {
+            const bytes = new Uint8Array(48);
+            crypto.getRandomValues(bytes);
+            document.getElementById('pubkey').value = '0x' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        function generateSignature() {
+            const bytes = new Uint8Array(96);
+            crypto.getRandomValues(bytes);
+            document.getElementById('signature').value = '0x' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        async function createValidator() {
+            if (!web3 || !currentAccount) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            try {
+                const description = {
+                    moniker: document.getElementById('moniker').value || 'Test Validator',
+                    identity: '',
+                    website: '',
+                    securityContact: '',
+                    details: 'Test validator on 0G testnet'
+                };
+                
+                const commissionRate = Math.floor(parseFloat(document.getElementById('commissionRate').value || 10) * 100);
+                const pubkey = document.getElementById('pubkey').value;
+                const signature = document.getElementById('signature').value || '0x' + '00'.repeat(96);
+                
+                if (!pubkey) {
+                    alert('Please generate or enter a public key');
+                    return;
+                }
+                
+                const minStake = web3.utils.toWei('0.1', 'ether');
+                
+                console.log('Creating validator with:', {
+                    description,
+                    commissionRate,
+                    pubkey: pubkey.slice(0, 20) + '...',
+                    value: minStake
+                });
+                
+                const tx = await stakingContract.methods
+                    .createAndInitializeValidatorIfNecessary(
+                        description,
+                        commissionRate,
+                        1000000, // withdrawal fee in gwei
+                        pubkey,
+                        signature
+                    )
+                    .send({ 
+                        from: currentAccount,
+                        value: minStake,
+                        gas: 500000
+                    });
+                
+                const validatorAddress = await stakingContract.methods
+                    .computeValidatorAddress(pubkey)
+                    .call();
+                
+                document.getElementById('createMessage').className = 'message success';
+                document.getElementById('createMessage').textContent = 
+                    `Validator created! Address: ${validatorAddress}. Tx: ${tx.transactionHash}`;
+                
+                // Auto-fill transfer form
+                document.getElementById('validatorAddress').value = validatorAddress;
+                const futureOwner = document.getElementById('futureOwner').value;
+                if (futureOwner) {
+                    document.getElementById('newOwner').value = futureOwner;
+                }
+                
+            } catch (error) {
+                console.error('Error creating validator:', error);
+                document.getElementById('createMessage').className = 'message error';
+                document.getElementById('createMessage').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function transferOwnership() {
+            if (!web3 || !currentAccount) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            try {
+                const validatorAddress = document.getElementById('validatorAddress').value;
+                const newOwner = document.getElementById('newOwner').value;
+                
+                if (!validatorAddress || !newOwner) {
+                    alert('Please enter both addresses');
+                    return;
+                }
+                
+                const validatorContract = new web3.eth.Contract(VALIDATOR_ABI, validatorAddress);
+                
+                const tx = await validatorContract.methods
+                    .transferOwnership(newOwner)
+                    .send({ 
+                        from: currentAccount,
+                        gas: 100000
+                    });
+                
+                document.getElementById('transferMessage').className = 'message success';
+                document.getElementById('transferMessage').textContent = 
+                    `Ownership transferred! Tx: ${tx.transactionHash}`;
+                
+            } catch (error) {
+                console.error('Error transferring ownership:', error);
+                document.getElementById('transferMessage').className = 'message error';
+                document.getElementById('transferMessage').textContent = 'Error: ' + error.message;
+            }
+        }
+        
+        async function checkOwner() {
+            if (!web3) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            const validatorAddress = document.getElementById('checkValidatorAddress').value;
+            if (!validatorAddress) {
+                alert('Please enter a validator contract address');
+                return;
+            }
+            
+            // Hide previous results
+            document.getElementById('ownershipResult').style.display = 'none';
+            document.getElementById('checkOwnerError').style.display = 'none';
+            
+            try {
+                // Create validator contract instance
+                const validatorContract = new web3.eth.Contract(VALIDATOR_ABI, validatorAddress);
+                
+                // Get ownership information
+                const owner = await validatorContract.methods.owner().call();
+                
+                // Try to get additional information (these might fail for non-mock contracts)
+                let initialStaker = 'N/A';
+                let stakedAmount = 'N/A';
+                
+                try {
+                    initialStaker = await validatorContract.methods.initialStaker().call();
+                } catch (e) {
+                    console.log('Could not get initialStaker (might not be a mock contract)');
+                }
+                
+                try {
+                    const amount = await validatorContract.methods.stakedAmount().call();
+                    stakedAmount = web3.utils.fromWei(amount, 'ether') + ' ETH';
+                } catch (e) {
+                    console.log('Could not get stakedAmount (might not be a mock contract)');
+                }
+                
+                // Display results
+                document.getElementById('checkValidatorAddr').textContent = validatorAddress;
+                document.getElementById('currentOwnerAddr').textContent = owner;
+                document.getElementById('initialStakerAddr').textContent = initialStaker;
+                document.getElementById('stakedAmountValue').textContent = stakedAmount;
+                document.getElementById('ownershipResult').style.display = 'block';
+                
+                // Check if connected wallet is the owner
+                if (currentAccount && owner.toLowerCase() === currentAccount.toLowerCase()) {
+                    document.getElementById('currentOwnerAddr').innerHTML = owner + ' <span style="color: #10b981; font-weight: bold;">(You)</span>';
+                }
+                
+            } catch (error) {
+                console.error('Error checking ownership:', error);
+                document.getElementById('checkOwnerError').textContent = 'Error: ' + error.message + '. Make sure the address is a valid validator contract.';
+                document.getElementById('checkOwnerError').style.display = 'block';
+            }
+        }
+        
+        async function queryValidator() {
+            if (!web3) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            try {
+                const input = document.getElementById('queryInput').value;
+                if (!input) {
+                    alert('Please enter a pubkey or address');
+                    return;
+                }
+                
+                let result = {};
+                
+                if (input.length === 42) {
+                    // It's an address, query validator contract
+                    const validatorContract = new web3.eth.Contract(VALIDATOR_ABI, input);
+                    const owner = await validatorContract.methods.owner().call();
+                    result = {
+                        validatorAddress: input,
+                        currentOwner: owner
+                    };
+                } else {
+                    // It's a pubkey, compute address
+                    const address = await stakingContract.methods
+                        .computeValidatorAddress(input)
+                        .call();
+                    result = {
+                        pubkey: input.slice(0, 20) + '...',
+                        computedAddress: address
+                    };
+                }
+                
+                document.getElementById('queryOutput').textContent = JSON.stringify(result, null, 2);
+                document.getElementById('queryResult').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error querying:', error);
+                alert('Query error: ' + error.message);
+            }
+        }
+        
+        // Generate initial keys
+        window.addEventListener('load', () => {
+            generatePubkey();
+            generateSignature();
+        });
+    </script>
+</body>
+</html>

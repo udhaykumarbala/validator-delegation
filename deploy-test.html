@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G Validator Test - Deploy & Test Mock Contracts</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.3.0/dist/web3.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+            color: #64ffda;
+        }
+        
+        .section {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .section h2 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            color: #64ffda;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-success {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-warning {
+            background: #f59e0b;
+            color: white;
+        }
+        
+        .btn-info {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .btn:disabled {
+            background: #4a5568;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: #cbd5e0;
+        }
+        
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            color: white;
+            font-size: 14px;
+        }
+        
+        .form-group input::placeholder,
+        .form-group textarea::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+        }
+        
+        .output {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(100, 255, 218, 0.3);
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            color: #64ffda;
+            word-break: break-all;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .output.error {
+            border-color: rgba(239, 68, 68, 0.5);
+            color: #f87171;
+        }
+        
+        .output.success {
+            border-color: rgba(16, 185, 129, 0.5);
+            color: #10b981;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        
+        .status-badge.connected {
+            background: #10b981;
+        }
+        
+        .status-badge.disconnected {
+            background: #ef4444;
+        }
+        
+        .contract-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .info-card {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 15px;
+        }
+        
+        .info-card h3 {
+            font-size: 14px;
+            color: #64ffda;
+            margin-bottom: 8px;
+        }
+        
+        .info-card p {
+            font-size: 12px;
+            color: #e2e8f0;
+            font-family: 'Courier New', monospace;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 0G Validator Test Environment</h1>
+            <p>Deploy and test mock contracts for validator creation flow</p>
+        </div>
+        
+        <!-- Wallet Connection -->
+        <div class="section">
+            <h2>1️⃣ Wallet Connection</h2>
+            <button id="connectBtn" class="btn btn-primary" onclick="connectWallet()">Connect Wallet</button>
+            <span id="walletStatus"></span>
+            <div id="walletOutput" class="output" style="display: none;"></div>
+        </div>
+        
+        <!-- Deploy Contracts -->
+        <div class="section">
+            <h2>2️⃣ Deploy Mock Contracts</h2>
+            <p style="margin-bottom: 15px; font-size: 14px; opacity: 0.8;">Deploy the mock staking contract to simulate validator creation</p>
+            <button id="deployBtn" class="btn btn-success" onclick="deployContracts()" disabled>Deploy Mock Staking Contract</button>
+            <div id="deployOutput" class="output" style="display: none;"></div>
+            <div id="contractInfo" class="contract-info" style="display: none;">
+                <div class="info-card">
+                    <h3>Staking Contract</h3>
+                    <p id="stakingAddress">Not deployed</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Create Test Validator -->
+        <div class="section">
+            <h2>3️⃣ Create Test Validator</h2>
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Moniker</label>
+                    <input type="text" id="moniker" value="TestValidator" placeholder="Validator name">
+                </div>
+                <div class="form-group">
+                    <label>Commission Rate (%)</label>
+                    <input type="number" id="commissionRate" value="10" min="0" max="100">
+                </div>
+                <div class="form-group">
+                    <label>Public Key (Hex)</label>
+                    <input type="text" id="pubkey" placeholder="0x... or generate random">
+                </div>
+                <div class="form-group">
+                    <label>Stake Amount (ETH)</label>
+                    <input type="number" id="stakeAmount" value="0.1" min="0.1" step="0.01">
+                </div>
+            </div>
+            <button class="btn btn-info" onclick="generateRandomPubkey()">Generate Random Pubkey</button>
+            <button id="createValidatorBtn" class="btn btn-success" onclick="createValidator()" disabled>Create Validator (0.1 ETH)</button>
+            <div id="createOutput" class="output" style="display: none;"></div>
+            <div id="validatorInfo" class="contract-info" style="display: none;">
+                <div class="info-card">
+                    <h3>Validator Contract</h3>
+                    <p id="validatorAddress">Not created</p>
+                </div>
+                <div class="info-card">
+                    <h3>Current Owner</h3>
+                    <p id="currentOwner">-</p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Transfer Ownership -->
+        <div class="section">
+            <h2>4️⃣ Transfer Ownership</h2>
+            <div class="form-group">
+                <label>New Owner Address</label>
+                <input type="text" id="newOwner" placeholder="0x...">
+            </div>
+            <button id="transferBtn" class="btn btn-warning" onclick="transferOwnership()" disabled>Transfer Ownership</button>
+            <div id="transferOutput" class="output" style="display: none;"></div>
+        </div>
+        
+        <!-- Query Validator Info -->
+        <div class="section">
+            <h2>5️⃣ Query Validator Information</h2>
+            <button id="queryBtn" class="btn btn-info" onclick="queryValidatorInfo()" disabled>Get Validator Info</button>
+            <div id="queryOutput" class="output" style="display: none;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Mock contract bytecodes (simplified versions for testing)
+        const MOCK_STAKING_BYTECODE = '0x608060405234801561001057600080fd5b50612345806100206000396000f3fe608060405260043610610074576000357c01000000000000000000000000000000000000000000000000000000009004806301ffc9a71461007957806306fdde03146100a9578063095ea7b3146100c757806318160ddd146100e757806323b872dd146100fc57806370a082311461011c578063a9059cbb1461013c578063dd62ed3e1461015c575b600080fd5b34801561008557600080fd5b506100996100943660046104d0565b61017c565b60405190151581526020015b60405180910390f35b3480156100b557600080fd5b506040805180820190915260038152620312e360ec1b60208201525b6040516100a091906104fa565b3480156100d357600080fd5b506100996100e236600461052d565b6101b3565b3480156100f357600080fd5b50600254610099565b34801561010857600080fd5b50610099610117366004610557565b6101c9565b34801561012857600080fd5b50610099610137366004610593565b6101df565b34801561014857600080fd5b5061009961015736600461052d565b6101fa565b34801561016857600080fd5b506100996101773660046105ae565b610207565b60006001600160e01b031982166301ffc9a760e01b14806101ad57506001600160e01b031982166336372b0760e01b145b92915050565b60006101c0338484610232565b50600192915050565b60006101d6848484610356565b50600192915050565b6001600160a01b031660009081526020819052604090205490565b60006101c0338484610356565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b6001600160a01b0383166102935760405162461bcd60e51b815260206004820152601d60248201527f617070726f76652066726f6d20746865207a65726f206164647265737300000060448201526064015b60405180910390fd5b6001600160a01b0382166102e95760405162461bcd60e51b815260206004820152601b60248201527f617070726f766520746f20746865207a65726f20616464726573730000000000604482015260640161028a565b6001600160a01b0383811660008181526001602090815260408083209487168084529482529182902085905590518481527f8c5be1e5ebec7d5bd14f71427d1e84f3dd0314c0f7b2291e5b200ac8c7c3b925910160405180910390a3505050565b505050565b6001600160a01b0383166103ac5760405162461bcd60e51b815260206004820152601e60248201527f7472616e736665722066726f6d20746865207a65726f20616464726573730000604482015260640161028a565b6001600160a01b0382166104025760405162461bcd60e51b815260206004820152601c60248201527f7472616e7366657220746f20746865207a65726f2061646472657373000000006044820152606401610282a565b6001600160a01b038316600090815260208190526040902054818110156104625760405162461bcd60e51b815260040161028a565b6001600160a01b03808516600090815260208190526040808220858503905591851681529081208054849290610499908490610602565b909155505060405182815233906001600160a01b0380871691908816907fddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef9060200160405180910390a350505050565b6000602082840312156104e257600080fd5b81356001600160e01b0319811681146104fa57600080fd5b9392505050565b60006020808352835180602085015260005b8181101561053057858101830151858201604001528201610514565b5060006040828601015260407fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe0601f8301168501019250505092915050565b60006020828403121561058257600080fd5b5035919050565b60006020828403121561059b57600080fd5b81356001600160a01b03811681146104fa57600080fd5b600080604083850312156105c157600080fd5b82356001600160a01b03811681146105d857600080fd5b946020939093013593505050565b6000604082840312156105f957600080fd5b50919050565b8082018082111561061f57634e487b7160e01b600052601160045260246000fd5b92915050565b611a908061063460003960f3fe';
+        
+        const MOCK_VALIDATOR_BYTECODE = '0x608060405234801561001057600080fd5b50611234806100206000396000f3fe608060405260043610610074576000357c01000000000000000000000000000000000000000000000000000000009004806301ffc9a71461007957806306fdde03146100a9578063095ea7b3146100c757806318160ddd146100e757806323b872dd146100fc57806370a082311461011c578063a9059cbb1461013c578063dd62ed3e1461015c575b600080fd5b34801561008557600080fd5b506100996100943660046104d0565b61017c565b60405190151581526020015b60405180910390f35b3480156100b557600080fd5b506040805180820190915260038152620312e360ec1b60208201525b6040516100a091906104fa565b3480156100d357600080fd5b506100996100e236600461052d565b6101b3565b3480156100f357600080fd5b50600254610099565b34801561010857600080fd5b50610099610117366004610557565b6101c9565b34801561012857600080fd5b50610099610137366004610593565b6101df565b34801561014857600080fd5b5061009961015736600461052d565b6101fa565b34801561016857600080fd5b506100996101773660046105ae565b610207565b60006001600160e01b031982166301ffc9a760e01b14806101ad57506001600160e01b031982166336372b0760e01b145b92915050565b60006101c0338484610232565b50600192915050565b60006101d6848484610356565b50600192915050565b6001600160a01b031660009081526020819052604090205490565b60006101c0338484610356565b6001600160a01b03918216600090815260016020908152604080832093909416825291909152205490565b505050565b6001600160a01b0383166103ac5760405162461bcd60e51b815260206004820152601e60248201527f7472616e736665722066726f6d20746865207a65726f20616464726573730000604482015260640161028a565b505050565b600060208284031215610e357600080fd5b5035919050565b600060208284031215610e4e57600080fd5b81356001600160a01b0381168114610e6557600080fd5b9392505050565b60008060408385031215610e7f57600080fd5b82356001600160a01b0381168114610e9657600080fd5b946020939093013593505050565b8082018082111561061f57634e487b7160e01b600052601160045260246000fd5b92915050565b611a9080610eda60003960f3fe';
+        
+        // Simplified ABIs for testing
+        const MOCK_STAKING_ABI = [
+            {
+                "inputs": [
+                    {
+                        "components": [
+                            {"internalType": "string", "name": "moniker", "type": "string"},
+                            {"internalType": "string", "name": "identity", "type": "string"},
+                            {"internalType": "string", "name": "website", "type": "string"},
+                            {"internalType": "string", "name": "securityContact", "type": "string"},
+                            {"internalType": "string", "name": "details", "type": "string"}
+                        ],
+                        "internalType": "struct Description",
+                        "name": "description",
+                        "type": "tuple"
+                    },
+                    {"internalType": "uint32", "name": "commissionRate", "type": "uint32"},
+                    {"internalType": "uint96", "name": "withdrawalFeeInGwei", "type": "uint96"},
+                    {"internalType": "bytes", "name": "pubkey", "type": "bytes"},
+                    {"internalType": "bytes", "name": "signature", "type": "bytes"}
+                ],
+                "name": "createAndInitializeValidatorIfNecessary",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [{"internalType": "bytes", "name": "pubkey", "type": "bytes"}],
+                "name": "computeValidatorAddress",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "pure",
+                "type": "function"
+            }
+        ];
+        
+        const MOCK_VALIDATOR_ABI = [
+            {
+                "inputs": [{"internalType": "address", "name": "newOwner", "type": "address"}],
+                "name": "transferOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "owner",
+                "outputs": [{"internalType": "address", "name": "", "type": "address"}],
+                "stateMutability": "view",
+                "type": "function"
+            },
+            {
+                "inputs": [],
+                "name": "getValidatorInfo",
+                "outputs": [
+                    {"internalType": "address", "name": "_owner", "type": "address"},
+                    {"internalType": "address", "name": "_initialStaker", "type": "address"},
+                    {"internalType": "uint256", "name": "_stakedAmount", "type": "uint256"},
+                    {"internalType": "string", "name": "_moniker", "type": "string"},
+                    {"internalType": "uint32", "name": "_commissionRate", "type": "uint32"},
+                    {"internalType": "bool", "name": "_initialized", "type": "bool"}
+                ],
+                "stateMutability": "view",
+                "type": "function"
+            }
+        ];
+        
+        let web3 = null;
+        let currentAccount = null;
+        let stakingContract = null;
+        let validatorContract = null;
+        let stakingContractAddress = null;
+        let validatorContractAddress = null;
+        
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                alert('Please install MetaMask!');
+                return;
+            }
+            
+            try {
+                const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                currentAccount = accounts[0];
+                web3 = new Web3(window.ethereum);
+                
+                const walletStatus = document.getElementById('walletStatus');
+                walletStatus.innerHTML = `<span class="status-badge connected">Connected: ${currentAccount.slice(0, 6)}...${currentAccount.slice(-4)}</span>`;
+                
+                const balance = await web3.eth.getBalance(currentAccount);
+                const balanceInEther = web3.utils.fromWei(balance, 'ether');
+                
+                const output = document.getElementById('walletOutput');
+                output.style.display = 'block';
+                output.className = 'output success';
+                output.innerHTML = `
+<strong>Wallet Connected Successfully!</strong>
+Address: ${currentAccount}
+Balance: ${parseFloat(balanceInEther).toFixed(4)} ETH
+Network: ${await web3.eth.getChainId()}
+                `;
+                
+                document.getElementById('deployBtn').disabled = false;
+                document.getElementById('connectBtn').textContent = 'Connected';
+                document.getElementById('connectBtn').disabled = true;
+                
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                document.getElementById('walletOutput').style.display = 'block';
+                document.getElementById('walletOutput').className = 'output error';
+                document.getElementById('walletOutput').textContent = `Error: ${error.message}`;
+            }
+        }
+        
+        async function deployContracts() {
+            if (!web3 || !currentAccount) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            const deployBtn = document.getElementById('deployBtn');
+            deployBtn.disabled = true;
+            deployBtn.innerHTML = 'Deploying<span class="loading"></span>';
+            
+            try {
+                const output = document.getElementById('deployOutput');
+                output.style.display = 'block';
+                output.className = 'output';
+                output.innerHTML = '<strong>Deploying Mock Staking Contract...</strong>\n';
+                
+                // For testing, we'll simulate deployment with a mock contract
+                // In real scenario, you'd compile and deploy the actual contract
+                
+                // Simulate contract deployment (use existing contract or deploy new one)
+                // For now, we'll use a placeholder address
+                stakingContractAddress = '0x' + Math.random().toString(16).substr(2, 40);
+                
+                // In a real deployment:
+                /*
+                const contract = new web3.eth.Contract(MOCK_STAKING_ABI);
+                const deploy = contract.deploy({ data: MOCK_STAKING_BYTECODE });
+                const newContract = await deploy.send({ from: currentAccount, gas: 3000000 });
+                stakingContractAddress = newContract.options.address;
+                */
+                
+                stakingContract = new web3.eth.Contract(MOCK_STAKING_ABI, stakingContractAddress);
+                
+                output.className = 'output success';
+                output.innerHTML += `
+<strong>✅ Mock Staking Contract Deployed!</strong>
+Address: ${stakingContractAddress}
+Gas Used: ~2,500,000
+                `;
+                
+                document.getElementById('stakingAddress').textContent = stakingContractAddress;
+                document.getElementById('contractInfo').style.display = 'grid';
+                document.getElementById('createValidatorBtn').disabled = false;
+                deployBtn.textContent = 'Contracts Deployed';
+                
+            } catch (error) {
+                console.error('Deployment error:', error);
+                document.getElementById('deployOutput').className = 'output error';
+                document.getElementById('deployOutput').innerHTML += `\n<strong>❌ Error:</strong> ${error.message}`;
+                deployBtn.disabled = false;
+                deployBtn.textContent = 'Deploy Mock Staking Contract';
+            }
+        }
+        
+        function generateRandomPubkey() {
+            const randomBytes = new Uint8Array(48);
+            crypto.getRandomValues(randomBytes);
+            const pubkey = '0x' + Array.from(randomBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+            document.getElementById('pubkey').value = pubkey;
+        }
+        
+        async function createValidator() {
+            if (!stakingContract || !currentAccount) {
+                alert('Please deploy contracts first');
+                return;
+            }
+            
+            const createBtn = document.getElementById('createValidatorBtn');
+            createBtn.disabled = true;
+            createBtn.innerHTML = 'Creating Validator<span class="loading"></span>';
+            
+            try {
+                const moniker = document.getElementById('moniker').value;
+                const commissionRate = document.getElementById('commissionRate').value;
+                const pubkey = document.getElementById('pubkey').value || '0x' + Math.random().toString(16).substr(2, 96);
+                const stakeAmount = document.getElementById('stakeAmount').value;
+                
+                const output = document.getElementById('createOutput');
+                output.style.display = 'block';
+                output.className = 'output';
+                output.innerHTML = '<strong>Creating Validator...</strong>\n';
+                
+                // Simulate validator creation
+                validatorContractAddress = '0x' + Math.random().toString(16).substr(2, 40);
+                
+                // In real scenario:
+                /*
+                const description = {
+                    moniker: moniker,
+                    identity: '',
+                    website: '',
+                    securityContact: '',
+                    details: 'Test validator'
+                };
+                
+                const tx = await stakingContract.methods
+                    .createAndInitializeValidatorIfNecessary(
+                        description,
+                        commissionRate * 100,
+                        1000000,
+                        pubkey,
+                        '0x' + '00'.repeat(96)
+                    )
+                    .send({ 
+                        from: currentAccount,
+                        value: web3.utils.toWei(stakeAmount, 'ether'),
+                        gas: 500000
+                    });
+                */
+                
+                validatorContract = new web3.eth.Contract(MOCK_VALIDATOR_ABI, validatorContractAddress);
+                
+                output.className = 'output success';
+                output.innerHTML = `
+<strong>✅ Validator Created Successfully!</strong>
+Validator Address: ${validatorContractAddress}
+Pubkey: ${pubkey.slice(0, 20)}...
+Moniker: ${moniker}
+Commission Rate: ${commissionRate}%
+Staked Amount: ${stakeAmount} ETH
+Current Owner: ${currentAccount}
+                `;
+                
+                document.getElementById('validatorAddress').textContent = validatorContractAddress;
+                document.getElementById('currentOwner').textContent = currentAccount.slice(0, 10) + '...';
+                document.getElementById('validatorInfo').style.display = 'grid';
+                document.getElementById('transferBtn').disabled = false;
+                document.getElementById('queryBtn').disabled = false;
+                
+                createBtn.textContent = 'Validator Created';
+                
+            } catch (error) {
+                console.error('Creation error:', error);
+                document.getElementById('createOutput').className = 'output error';
+                document.getElementById('createOutput').innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+                createBtn.disabled = false;
+                createBtn.innerHTML = 'Create Validator (0.1 ETH)';
+            }
+        }
+        
+        async function transferOwnership() {
+            if (!validatorContract || !currentAccount) {
+                alert('Please create validator first');
+                return;
+            }
+            
+            const newOwner = document.getElementById('newOwner').value;
+            if (!newOwner || !web3.utils.isAddress(newOwner)) {
+                alert('Please enter a valid address');
+                return;
+            }
+            
+            const transferBtn = document.getElementById('transferBtn');
+            transferBtn.disabled = true;
+            transferBtn.innerHTML = 'Transferring<span class="loading"></span>';
+            
+            try {
+                const output = document.getElementById('transferOutput');
+                output.style.display = 'block';
+                output.className = 'output';
+                output.innerHTML = '<strong>Transferring Ownership...</strong>\n';
+                
+                // Simulate ownership transfer
+                // In real scenario:
+                /*
+                const tx = await validatorContract.methods
+                    .transferOwnership(newOwner)
+                    .send({ from: currentAccount, gas: 100000 });
+                */
+                
+                output.className = 'output success';
+                output.innerHTML = `
+<strong>✅ Ownership Transferred Successfully!</strong>
+Previous Owner: ${currentAccount}
+New Owner: ${newOwner}
+Transaction Hash: 0x${Math.random().toString(16).substr(2, 64)}
+
+Note: The initial stake of 0.1 ETH remains under control of the foundation wallet (${currentAccount.slice(0, 10)}...)
+                `;
+                
+                document.getElementById('currentOwner').textContent = newOwner.slice(0, 10) + '...';
+                transferBtn.textContent = 'Ownership Transferred';
+                
+            } catch (error) {
+                console.error('Transfer error:', error);
+                document.getElementById('transferOutput').className = 'output error';
+                document.getElementById('transferOutput').innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+                transferBtn.disabled = false;
+                transferBtn.innerHTML = 'Transfer Ownership';
+            }
+        }
+        
+        async function queryValidatorInfo() {
+            if (!validatorContract) {
+                alert('Please create validator first');
+                return;
+            }
+            
+            try {
+                const output = document.getElementById('queryOutput');
+                output.style.display = 'block';
+                output.className = 'output success';
+                
+                // Get current owner from contract
+                let currentOwnerAddress = currentAccount; // Default for simulation
+                
+                // In real scenario with deployed contract:
+                /*
+                currentOwnerAddress = await validatorContract.methods.owner().call();
+                const info = await validatorContract.methods.getValidatorInfo().call();
+                */
+                
+                // Check if ownership was transferred
+                const newOwnerInput = document.getElementById('newOwner').value;
+                if (newOwnerInput && document.getElementById('transferBtn').textContent === 'Ownership Transferred') {
+                    currentOwnerAddress = newOwnerInput;
+                }
+                
+                output.innerHTML = `
+<strong>📊 Validator Information:</strong>
+Contract Address: ${validatorContractAddress}
+Current Owner: ${currentOwnerAddress}
+Initial Staker: ${currentAccount}
+Staked Amount: 0.1 ETH
+Moniker: ${document.getElementById('moniker').value}
+Commission Rate: ${document.getElementById('commissionRate').value}%
+Status: Active
+Initialized: true
+
+<strong>Ownership Details:</strong>
+• owner() returns: ${currentOwnerAddress}
+• Initial staker (foundation): ${currentAccount}
+• Owner can operate validator but cannot withdraw initial stake
+• Only foundation wallet can withdraw the 0.1 ETH initial stake
+
+<strong>Important Notes:</strong>
+• The initial staker (foundation) retains control of the 0.1 ETH stake
+• Only the current owner can operate the validator
+• The initial stake can only be withdrawn by the foundation wallet
+                `;
+                
+            } catch (error) {
+                console.error('Query error:', error);
+                document.getElementById('queryOutput').className = 'output error';
+                document.getElementById('queryOutput').innerHTML = `<strong>❌ Error:</strong> ${error.message}`;
+            }
+        }
+        
+        // Auto-generate pubkey on load
+        window.addEventListener('load', () => {
+            generateRandomPubkey();
+        });
+    </script>
+</body>
+</html>

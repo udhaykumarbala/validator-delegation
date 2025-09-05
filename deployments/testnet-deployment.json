@@ -1,0 +1,12 @@
+{
+  "network": "testnet",
+  "chainId": "16601",
+  "deployer": "0xCc21d89c67E2F76815D16886178f1bF09A081b0D",
+  "timestamp": "2025-09-05T10:02:02.626Z",
+  "contracts": {
+    "MockStaking": {
+      "address": "0x17Db5D64Bb20424d75F8523338229e74A6D26060",
+      "minimumStake": "0.1 ETH"
+    }
+  }
+}

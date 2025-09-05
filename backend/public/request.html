@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G Validator Delegation Request</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .form-card {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .required::after {
+            content: ' *';
+            color: #ef4444;
+        }
+        
+        input[type="text"],
+        input[type="email"],
+        input[type="number"],
+        select,
+        textarea {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus,
+        select:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+        
+        .btn {
+            padding: 14px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            width: 100%;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h4 {
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+        
+        .info-box p {
+            color: #3730a3;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>0G Validator Delegation Request</h1>
+            <p>Submit your validator information for delegation</p>
+        </div>
+        
+        <div class="form-card">
+            <div id="message" class="message"></div>
+            
+            <div class="info-box">
+                <h4>📝 How it works</h4>
+                <p>1. Fill out this form with your validator details<br>
+                   2. Foundation team will review your request<br>
+                   3. Once approved, foundation will create your validator with 500 OG stake<br>
+                   4. Ownership will be transferred to your wallet address<br>
+                   5. You'll receive confirmation with transaction details</p>
+            </div>
+            
+            <form id="requestForm" onsubmit="submitRequest(event)">
+                <div class="form-section">
+                    <h3 class="section-title">Validator Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="moniker" class="required">Validator Name (Moniker)</label>
+                            <input type="text" id="moniker" name="moniker" required placeholder="My Validator">
+                        </div>
+                        <div class="form-group">
+                            <label for="identity">Identity (Keybase ID)</label>
+                            <input type="text" id="identity" name="identity" placeholder="Optional">
+                        </div>
+                        <div class="form-group">
+                            <label for="website">Website</label>
+                            <input type="text" id="website" name="website" placeholder="https://example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="security_contact">Security Contact</label>
+                            <input type="text" id="security_contact" name="security_contact" placeholder="security@example.com">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="details">Details</label>
+                            <textarea id="details" name="details" placeholder="Describe your validator experience and infrastructure"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Technical Configuration</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="commission_rate" class="required">Commission Rate (%)</label>
+                            <input type="number" id="commission_rate" name="commission_rate" required min="0" max="100" step="0.01" value="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="withdrawal_fee" class="required">Withdrawal Fee (Gwei)</label>
+                            <input type="number" id="withdrawal_fee" name="withdrawal_fee" required value="1000000">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="pubkey" class="required">Validator Public Key (48 bytes hex)</label>
+                            <input type="text" id="pubkey" name="pubkey" required placeholder="0x..." pattern="^0x[a-fA-F0-9]{96}$">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="signature" class="required">Validator Signature (96 bytes hex)</label>
+                            <textarea id="signature" name="signature" required placeholder="0x..." pattern="^0x[a-fA-F0-9]{192}$"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Contact Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="operator_name" class="required">Your Name</label>
+                            <input type="text" id="operator_name" name="operator_name" required placeholder="John Doe">
+                        </div>
+                        <div class="form-group">
+                            <label for="operator_email" class="required">Email Address</label>
+                            <input type="email" id="operator_email" name="operator_email" required placeholder="john@example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="operator_wallet" class="required">Wallet Address (for ownership)</label>
+                            <input type="text" id="operator_wallet" name="operator_wallet" required placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                        </div>
+                        <div class="form-group">
+                            <label for="telegram_handle">Telegram Handle</label>
+                            <input type="text" id="telegram_handle" name="telegram_handle" placeholder="@username">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Network Selection</h3>
+                    <div class="form-group">
+                        <label for="network" class="required">Network</label>
+                        <select id="network" name="network" required>
+                            <option value="mainnet">Mainnet - 0G-Aristotle (500 0G stake)</option>
+                            <option value="testnet">Testnet - 0G-Galileo (32 OG stake)</option>
+                            <option value="mock">Testnet with Mock Contracts - 0G-Galileo (0.1 OG stake)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="submitBtn">Submit Delegation Request</button>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+        async function submitRequest(event) {
+            event.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const messageEl = document.getElementById('message');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = 'Submitting<span class="loading"></span>';
+            messageEl.className = 'message';
+            
+            try {
+                const formData = new FormData(event.target);
+                const requestData = {};
+                
+                for (let [key, value] of formData.entries()) {
+                    requestData[key] = value;
+                }
+                
+                const response = await fetch('/api/requests', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(requestData)
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    messageEl.className = 'message success';
+                    messageEl.innerHTML = `
+                        <strong>✅ Request Submitted Successfully!</strong><br>
+                        Your request ID is: <strong>${result.data.id}</strong><br>
+                        Please save this ID for your reference.<br>
+                        The foundation team will review your request and contact you via email.
+                    `;
+                    event.target.reset();
+                } else {
+                    messageEl.className = 'message error';
+                    messageEl.textContent = `Error: ${result.error}`;
+                }
+            } catch (error) {
+                console.error('Error submitting request:', error);
+                messageEl.className = 'message error';
+                messageEl.textContent = 'Failed to submit request. Please try again.';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Submit Delegation Request';
+            }
+        }
+    </script>
+</body>
+</html>

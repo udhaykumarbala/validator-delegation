@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G Validator Test - Simple Interface</title>
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.10.0/dist/web3.min.js"></script>
+</head>
+<body>
+    <h1>0G Validator Test Interface</h1>
+    <p>Contract: 0x5BE099336263bdbb92Cc6291c0e668daA2d84056</p>
+    
+    <div>
+        <h2>Connect Wallet</h2>
+        <button onclick="connect()">Connect</button>
+        <p id="wallet"></p>
+    </div>
+    
+    <div>
+        <h2>Create Validator</h2>
+        <input type="text" id="pubkey" placeholder="Public key">
+        <button onclick="generateKey()">Generate Random Key</button>
+        <br><br>
+        <button onclick="create()">Create Validator (0.1 ETH)</button>
+        <p id="result"></p>
+    </div>
+    
+    <div>
+        <h2>Check Owner</h2>
+        <input type="text" id="validator" placeholder="Validator address">
+        <button onclick="checkOwner()">Check</button>
+        <p id="owner"></p>
+    </div>
+
+    <script>
+        let web3, account, contract;
+        const CONTRACT_ADDR = '0x5BE099336263bdbb92Cc6291c0e668daA2d84056';
+        
+        async function connect() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    const accounts = await ethereum.request({ method: 'eth_requestAccounts' });
+                    account = accounts[0];
+                    web3 = new Web3(window.ethereum);
+                    
+                    // Switch to 0G testnet
+                    try {
+                        await ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: '0x40d9' }],
+                        });
+                    } catch (e) {
+                        if (e.code === 4902) {
+                            await ethereum.request({
+                                method: 'wallet_addEthereumChain',
+                                params: [{
+                                    chainId: '0x40d9',
+                                    chainName: '0G-Galileo-Testnet',
+                                    nativeCurrency: { name: 'OG', symbol: 'OG', decimals: 18 },
+                                    rpcUrls: ['https://evmrpc-testnet.0g.ai'],
+                                    blockExplorerUrls: ['https://chainscan-galileo.0g.ai']
+                                }],
+                            });
+                        }
+                    }
+                    
+                    // Initialize contract with minimal ABI
+                    contract = new web3.eth.Contract([
+                        {
+                            "inputs": [
+                                {
+                                    "components": [
+                                        {"name": "moniker", "type": "string"},
+                                        {"name": "identity", "type": "string"},
+                                        {"name": "website", "type": "string"},
+                                        {"name": "securityContact", "type": "string"},
+                                        {"name": "details", "type": "string"}
+                                    ],
+                                    "name": "description",
+                                    "type": "tuple"
+                                },
+                                {"name": "commissionRate", "type": "uint32"},
+                                {"name": "withdrawalFeeInGwei", "type": "uint96"},
+                                {"name": "pubkey", "type": "bytes"},
+                                {"name": "signature", "type": "bytes"}
+                            ],
+                            "name": "createAndInitializeValidatorIfNecessary",
+                            "outputs": [],
+                            "stateMutability": "payable",
+                            "type": "function"
+                        },
+                        {
+                            "inputs": [{"name": "pubkey", "type": "bytes"}],
+                            "name": "computeValidatorAddress",
+                            "outputs": [{"name": "", "type": "address"}],
+                            "stateMutability": "pure",
+                            "type": "function"
+                        }
+                    ], CONTRACT_ADDR);
+                    
+                    document.getElementById('wallet').innerText = 'Connected: ' + account;
+                } catch (error) {
+                    alert('Error: ' + error.message);
+                }
+            } else {
+                alert('Please install MetaMask!');
+            }
+        }
+        
+        function generateKey() {
+            const bytes = new Uint8Array(48);
+            crypto.getRandomValues(bytes);
+            document.getElementById('pubkey').value = '0x' + Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        async function create() {
+            if (!contract || !account) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            const pubkey = document.getElementById('pubkey').value;
+            if (!pubkey) {
+                alert('Please enter or generate a public key');
+                return;
+            }
+            
+            try {
+                const description = {
+                    moniker: 'Test Validator',
+                    identity: '',
+                    website: '',
+                    securityContact: '',
+                    details: 'Testing'
+                };
+                
+                const tx = await contract.methods
+                    .createAndInitializeValidatorIfNecessary(
+                        description,
+                        1000, // 10% commission
+                        1000000, // withdrawal fee
+                        pubkey,
+                        '0x' + '00'.repeat(96) // dummy signature
+                    )
+                    .send({ 
+                        from: account,
+                        value: web3.utils.toWei('0.1', 'ether'),
+                        gas: 500000
+                    });
+                
+                const validatorAddr = await contract.methods.computeValidatorAddress(pubkey).call();
+                document.getElementById('result').innerText = 'Success! Validator: ' + validatorAddr + '\nTx: ' + tx.transactionHash;
+                document.getElementById('validator').value = validatorAddr;
+            } catch (error) {
+                document.getElementById('result').innerText = 'Error: ' + error.message;
+                console.error(error);
+            }
+        }
+        
+        async function checkOwner() {
+            if (!web3) {
+                alert('Please connect wallet first');
+                return;
+            }
+            
+            const addr = document.getElementById('validator').value;
+            if (!addr) {
+                alert('Please enter validator address');
+                return;
+            }
+            
+            try {
+                const validatorContract = new web3.eth.Contract([
+                    {
+                        "inputs": [],
+                        "name": "owner",
+                        "outputs": [{"name": "", "type": "address"}],
+                        "stateMutability": "view",
+                        "type": "function"
+                    }
+                ], addr);
+                
+                const owner = await validatorContract.methods.owner().call();
+                document.getElementById('owner').innerText = 'Owner: ' + owner;
+            } catch (error) {
+                document.getElementById('owner').innerText = 'Error: ' + error.message;
+            }
+        }
+        
+        // Auto-generate key on load
+        window.addEventListener('load', generateKey);
+    </script>
+</body>
+</html>

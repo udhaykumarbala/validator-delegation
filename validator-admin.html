@@ -1,0 +1,874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>0G Validator Admin - Initialize & Transfer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+        
+        .wallet-status {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            color: white;
+            backdrop-filter: blur(10px);
+        }
+        
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .status-item {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .status-label {
+            font-size: 12px;
+            opacity: 0.7;
+            margin-bottom: 5px;
+        }
+        
+        .status-value {
+            font-size: 14px;
+            font-weight: 600;
+            word-break: break-all;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .tab-btn {
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        
+        .tab-btn:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        .tab-btn.active {
+            background: white;
+            color: #2a5298;
+        }
+        
+        .panel {
+            background: white;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            display: none;
+        }
+        
+        .panel.active {
+            display: block;
+        }
+        
+        .form-section {
+            margin-bottom: 30px;
+        }
+        
+        .section-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e2e8f0;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group.full-width {
+            grid-column: 1 / -1;
+        }
+        
+        label {
+            font-size: 14px;
+            font-weight: 500;
+            color: #666;
+            margin-bottom: 8px;
+        }
+        
+        .required::after {
+            content: ' *';
+            color: #ef4444;
+        }
+        
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+        
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #2a5298;
+            box-shadow: 0 0 0 3px rgba(42, 82, 152, 0.1);
+        }
+        
+        textarea {
+            resize: vertical;
+            min-height: 60px;
+        }
+        
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-primary:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .btn-connect {
+            background: #10b981;
+            color: white;
+        }
+        
+        .btn-connect:hover {
+            background: #059669;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .message.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+        
+        .message.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+        
+        .message.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            display: block;
+        }
+        
+        .transaction-list {
+            margin-top: 30px;
+        }
+        
+        .transaction-item {
+            padding: 15px;
+            background: #f7f9fc;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .tx-info {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .tx-hash {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            color: #2a5298;
+        }
+        
+        .tx-type {
+            font-size: 14px;
+            font-weight: 500;
+            color: #333;
+        }
+        
+        .tx-status {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .tx-status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        
+        .tx-status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .tx-status.failed {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .info-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
+        
+        .info-box h4 {
+            color: #1e40af;
+            margin-bottom: 8px;
+        }
+        
+        .info-box p {
+            color: #3730a3;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+            margin-left: 8px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>0G Validator Administration</h1>
+            <p>Initialize validators and transfer ownership</p>
+        </div>
+        
+        <div class="wallet-status">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <h3>Foundation Wallet Status</h3>
+                <button id="connectBtn" class="btn btn-connect" onclick="connectWallet()">Connect Foundation Wallet</button>
+            </div>
+            <div id="walletInfo" class="status-grid" style="display: none;">
+                <div class="status-item">
+                    <span class="status-label">Address</span>
+                    <span class="status-value" id="walletAddress">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Network</span>
+                    <span class="status-value" id="networkName">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Balance</span>
+                    <span class="status-value" id="balance">-</span>
+                </div>
+                <div class="status-item">
+                    <span class="status-label">Chain ID</span>
+                    <span class="status-value" id="chainId">-</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('create')">Create Validator</button>
+            <button class="tab-btn" onclick="switchTab('transfer')">Transfer Ownership</button>
+            <button class="tab-btn" onclick="switchTab('history')">Transaction History</button>
+        </div>
+        
+        <!-- Create Validator Panel -->
+        <div id="createPanel" class="panel active">
+            <div class="info-box">
+                <h4>Foundation Wallet Initialization</h4>
+                <p>The foundation wallet will initialize the validator with the minimum stake requirement. After creation, ownership can be transferred to the node operator while the foundation retains control of the initial stake.</p>
+            </div>
+            
+            <form id="createValidatorForm" onsubmit="createValidator(event)">
+                <div class="form-section">
+                    <h3 class="section-title">Validator Information</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="moniker" class="required">Moniker (Name)</label>
+                            <input type="text" id="moniker" name="moniker" required placeholder="My Validator">
+                        </div>
+                        <div class="form-group">
+                            <label for="identity">Identity (Optional)</label>
+                            <input type="text" id="identity" name="identity" placeholder="Keybase ID">
+                        </div>
+                        <div class="form-group">
+                            <label for="website">Website (Optional)</label>
+                            <input type="text" id="website" name="website" placeholder="https://example.com">
+                        </div>
+                        <div class="form-group">
+                            <label for="securityContact">Security Contact</label>
+                            <input type="text" id="securityContact" name="securityContact" placeholder="security@example.com">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="details">Details (Optional)</label>
+                            <textarea id="details" name="details" placeholder="Additional information about the validator"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Commission & Fees</h3>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="commissionRate" class="required">Commission Rate (%)</label>
+                            <input type="number" id="commissionRate" name="commissionRate" required min="0" max="100" step="0.01" placeholder="10">
+                        </div>
+                        <div class="form-group">
+                            <label for="withdrawalFee" class="required">Withdrawal Fee (Gwei)</label>
+                            <input type="number" id="withdrawalFee" name="withdrawalFee" required min="0" placeholder="1000000">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Validator Keys</h3>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="pubkey" class="required">Public Key (Hex)</label>
+                            <input type="text" id="pubkey" name="pubkey" required placeholder="0x..." pattern="^0x[a-fA-F0-9]+$">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="signature" class="required">Signature (Hex)</label>
+                            <textarea id="signature" name="signature" required placeholder="0x..." pattern="^0x[a-fA-F0-9]+$"></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-section">
+                    <h3 class="section-title">Future Owner</h3>
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="futureOwner" class="required">Future Owner Address</label>
+                            <input type="text" id="futureOwner" name="futureOwner" required placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                            <small style="color: #666; margin-top: 5px;">This address will receive ownership after initialization</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="createBtn">Initialize Validator</button>
+                <div id="createMessage" class="message"></div>
+            </form>
+        </div>
+        
+        <!-- Transfer Ownership Panel -->
+        <div id="transferPanel" class="panel">
+            <div class="info-box">
+                <h4>Ownership Transfer</h4>
+                <p>Transfer validator ownership to the node operator. The foundation wallet must be the current owner to perform this action. The initial stake will remain under foundation control.</p>
+            </div>
+            
+            <form id="transferOwnershipForm" onsubmit="transferOwnership(event)">
+                <div class="form-section">
+                    <div class="form-grid">
+                        <div class="form-group full-width">
+                            <label for="validatorAddress" class="required">Validator Contract Address</label>
+                            <input type="text" id="validatorAddress" name="validatorAddress" required placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                        </div>
+                        <div class="form-group full-width">
+                            <label for="newOwner" class="required">New Owner Address</label>
+                            <input type="text" id="newOwner" name="newOwner" required placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="transferBtn">Transfer Ownership</button>
+                <div id="transferMessage" class="message"></div>
+            </form>
+        </div>
+        
+        <!-- History Panel -->
+        <div id="historyPanel" class="panel">
+            <h3 class="section-title">Recent Transactions</h3>
+            <div id="transactionList" class="transaction-list">
+                <p style="text-align: center; color: #666;">No transactions yet</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.3.0/dist/web3.min.js"></script>
+    <script>
+        // Configuration
+        const CONFIG = {
+            // Testnet configuration
+            testnet: {
+                chainId: '0x40d9',
+                chainName: '0G-Galileo-Testnet',
+                stakingContract: '0xea224dBB52F57752044c0C86aD50930091F561B9',
+                rpcUrl: 'https://evmrpc-testnet.0g.ai',
+                explorer: 'https://chainscan-galileo.0g.ai',
+                currency: 'OG'
+            },
+            // Mainnet configuration (update when available)
+            mainnet: {
+                chainId: '0x4dd0', // Update with actual mainnet chain ID
+                chainName: '0G Mainnet',
+                stakingContract: '0x0000000000000000000000000000000000000000', // Update with actual address
+                rpcUrl: 'https://evmrpc.0g.ai', // Update with actual RPC
+                explorer: 'https://chainscan.0g.ai', // Update with actual explorer
+                currency: 'OG'
+            }
+        };
+        
+        // Current network (default to testnet)
+        let currentNetwork = 'testnet';
+        let web3 = null;
+        let currentAccount = null;
+        let stakingContract = null;
+        let transactions = [];
+        
+        // ABI for staking contract
+        const STAKING_ABI = [
+            {
+                "inputs": [
+                    {
+                        "components": [
+                            {"internalType": "string", "name": "moniker", "type": "string"},
+                            {"internalType": "string", "name": "identity", "type": "string"},
+                            {"internalType": "string", "name": "website", "type": "string"},
+                            {"internalType": "string", "name": "securityContact", "type": "string"},
+                            {"internalType": "string", "name": "details", "type": "string"}
+                        ],
+                        "internalType": "struct Description",
+                        "name": "description",
+                        "type": "tuple"
+                    },
+                    {"internalType": "uint32", "name": "commissionRate", "type": "uint32"},
+                    {"internalType": "uint96", "name": "withdrawalFeeInGwei", "type": "uint96"},
+                    {"internalType": "bytes", "name": "pubkey", "type": "bytes"},
+                    {"internalType": "bytes", "name": "signature", "type": "bytes"}
+                ],
+                "name": "createAndInitializeValidatorIfNecessary",
+                "outputs": [],
+                "stateMutability": "payable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "newOwner", "type": "address"}
+                ],
+                "name": "transferOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            },
+            {
+                "inputs": [
+                    {"internalType": "bytes", "name": "pubkey", "type": "bytes"}
+                ],
+                "name": "computeValidatorAddress",
+                "outputs": [
+                    {"internalType": "address", "name": "", "type": "address"}
+                ],
+                "stateMutability": "pure",
+                "type": "function"
+            }
+        ];
+        
+        // Validator contract ABI (for ownership transfer)
+        const VALIDATOR_ABI = [
+            {
+                "inputs": [
+                    {"internalType": "address", "name": "newOwner", "type": "address"}
+                ],
+                "name": "transferOwnership",
+                "outputs": [],
+                "stateMutability": "nonpayable",
+                "type": "function"
+            }
+        ];
+        
+        async function connectWallet() {
+            if (typeof window.ethereum === 'undefined') {
+                showMessage('createMessage', 'Please install MetaMask or another Web3 wallet', 'error');
+                return;
+            }
+            
+            const connectBtn = document.getElementById('connectBtn');
+            connectBtn.innerHTML = 'Connecting<span class="loading"></span>';
+            connectBtn.disabled = true;
+            
+            try {
+                const accounts = await ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+                
+                if (accounts.length > 0) {
+                    currentAccount = accounts[0];
+                    web3 = new Web3(window.ethereum);
+                    
+                    // Check network
+                    const chainId = await ethereum.request({ method: 'eth_chainId' });
+                    const config = CONFIG[currentNetwork];
+                    
+                    if (chainId !== config.chainId) {
+                        try {
+                            await ethereum.request({
+                                method: 'wallet_switchEthereumChain',
+                                params: [{ chainId: config.chainId }],
+                            });
+                        } catch (switchError) {
+                            if (switchError.code === 4902) {
+                                await ethereum.request({
+                                    method: 'wallet_addEthereumChain',
+                                    params: [{
+                                        chainId: config.chainId,
+                                        chainName: config.chainName,
+                                        nativeCurrency: {
+                                            name: config.currency,
+                                            symbol: config.currency,
+                                            decimals: 18
+                                        },
+                                        rpcUrls: [config.rpcUrl],
+                                        blockExplorerUrls: [config.explorer]
+                                    }],
+                                });
+                            }
+                        }
+                    }
+                    
+                    // Initialize contract
+                    stakingContract = new web3.eth.Contract(STAKING_ABI, config.stakingContract);
+                    
+                    // Update UI
+                    await updateWalletInfo();
+                    connectBtn.style.display = 'none';
+                    
+                    // Setup event listeners
+                    ethereum.on('accountsChanged', handleAccountsChanged);
+                    ethereum.on('chainChanged', () => window.location.reload());
+                }
+            } catch (error) {
+                console.error('Error connecting wallet:', error);
+                showMessage('createMessage', 'Failed to connect wallet', 'error');
+            } finally {
+                connectBtn.innerHTML = 'Connect Foundation Wallet';
+                connectBtn.disabled = false;
+            }
+        }
+        
+        async function updateWalletInfo() {
+            const walletInfo = document.getElementById('walletInfo');
+            const addressEl = document.getElementById('walletAddress');
+            const networkEl = document.getElementById('networkName');
+            const chainIdEl = document.getElementById('chainId');
+            const balanceEl = document.getElementById('balance');
+            
+            addressEl.textContent = `${currentAccount.slice(0, 6)}...${currentAccount.slice(-4)}`;
+            networkEl.textContent = CONFIG[currentNetwork].chainName;
+            chainIdEl.textContent = parseInt(CONFIG[currentNetwork].chainId, 16);
+            
+            const balance = await web3.eth.getBalance(currentAccount);
+            balanceEl.textContent = `${(balance / 1e18).toFixed(4)} ${CONFIG[currentNetwork].currency}`;
+            
+            walletInfo.style.display = 'grid';
+        }
+        
+        function handleAccountsChanged(accounts) {
+            if (accounts.length === 0) {
+                currentAccount = null;
+                document.getElementById('walletInfo').style.display = 'none';
+                document.getElementById('connectBtn').style.display = 'block';
+            } else {
+                currentAccount = accounts[0];
+                updateWalletInfo();
+            }
+        }
+        
+        function switchTab(tab) {
+            // Update tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update panels
+            document.querySelectorAll('.panel').forEach(panel => {
+                panel.classList.remove('active');
+            });
+            
+            if (tab === 'create') {
+                document.getElementById('createPanel').classList.add('active');
+            } else if (tab === 'transfer') {
+                document.getElementById('transferPanel').classList.add('active');
+            } else if (tab === 'history') {
+                document.getElementById('historyPanel').classList.add('active');
+                displayTransactions();
+            }
+        }
+        
+        function showMessage(elementId, text, type) {
+            const messageEl = document.getElementById(elementId);
+            messageEl.textContent = text;
+            messageEl.className = `message ${type}`;
+            setTimeout(() => {
+                messageEl.className = 'message';
+            }, 10000);
+        }
+        
+        async function createValidator(event) {
+            event.preventDefault();
+            
+            if (!currentAccount || !stakingContract) {
+                showMessage('createMessage', 'Please connect your wallet first', 'error');
+                return;
+            }
+            
+            const createBtn = document.getElementById('createBtn');
+            createBtn.disabled = true;
+            createBtn.innerHTML = 'Creating Validator<span class="loading"></span>';
+            
+            try {
+                const formData = new FormData(event.target);
+                
+                // Prepare description struct
+                const description = {
+                    moniker: formData.get('moniker'),
+                    identity: formData.get('identity') || '',
+                    website: formData.get('website') || '',
+                    securityContact: formData.get('securityContact') || '',
+                    details: formData.get('details') || ''
+                };
+                
+                // Convert commission rate to basis points (multiply by 100)
+                const commissionRate = Math.floor(parseFloat(formData.get('commissionRate')) * 100);
+                const withdrawalFeeInGwei = formData.get('withdrawalFee');
+                const pubkey = formData.get('pubkey');
+                const signature = formData.get('signature');
+                
+                // Minimum stake (32 OG tokens)
+                const minStake = web3.utils.toWei('32', 'ether');
+                
+                // Call contract
+                const tx = await stakingContract.methods
+                    .createAndInitializeValidatorIfNecessary(
+                        description,
+                        commissionRate,
+                        withdrawalFeeInGwei,
+                        pubkey,
+                        signature
+                    )
+                    .send({ 
+                        from: currentAccount,
+                        value: minStake,
+                        gas: 500000
+                    });
+                
+                // Get validator address
+                const validatorAddress = await stakingContract.methods
+                    .computeValidatorAddress(pubkey)
+                    .call();
+                
+                // Add to transactions
+                const txRecord = {
+                    hash: tx.transactionHash,
+                    type: 'Validator Created',
+                    validatorAddress: validatorAddress,
+                    futureOwner: formData.get('futureOwner'),
+                    status: 'success',
+                    timestamp: new Date().toISOString()
+                };
+                transactions.push(txRecord);
+                localStorage.setItem('0g_transactions', JSON.stringify(transactions));
+                
+                showMessage('createMessage', 
+                    `Validator created successfully! Address: ${validatorAddress}. ` +
+                    `Transaction: ${tx.transactionHash}. ` +
+                    `Now transfer ownership to: ${formData.get('futureOwner')}`, 
+                    'success');
+                
+                // Auto-fill transfer form
+                document.getElementById('validatorAddress').value = validatorAddress;
+                document.getElementById('newOwner').value = formData.get('futureOwner');
+                
+                // Clear form
+                event.target.reset();
+                
+            } catch (error) {
+                console.error('Error creating validator:', error);
+                showMessage('createMessage', `Error: ${error.message}`, 'error');
+            } finally {
+                createBtn.disabled = false;
+                createBtn.innerHTML = 'Initialize Validator';
+            }
+        }
+        
+        async function transferOwnership(event) {
+            event.preventDefault();
+            
+            if (!currentAccount || !web3) {
+                showMessage('transferMessage', 'Please connect your wallet first', 'error');
+                return;
+            }
+            
+            const transferBtn = document.getElementById('transferBtn');
+            transferBtn.disabled = true;
+            transferBtn.innerHTML = 'Transferring<span class="loading"></span>';
+            
+            try {
+                const formData = new FormData(event.target);
+                const validatorAddress = formData.get('validatorAddress');
+                const newOwner = formData.get('newOwner');
+                
+                // Create validator contract instance
+                const validatorContract = new web3.eth.Contract(VALIDATOR_ABI, validatorAddress);
+                
+                // Transfer ownership
+                const tx = await validatorContract.methods
+                    .transferOwnership(newOwner)
+                    .send({ 
+                        from: currentAccount,
+                        gas: 100000
+                    });
+                
+                // Add to transactions
+                const txRecord = {
+                    hash: tx.transactionHash,
+                    type: 'Ownership Transferred',
+                    validatorAddress: validatorAddress,
+                    newOwner: newOwner,
+                    status: 'success',
+                    timestamp: new Date().toISOString()
+                };
+                transactions.push(txRecord);
+                localStorage.setItem('0g_transactions', JSON.stringify(transactions));
+                
+                showMessage('transferMessage', 
+                    `Ownership transferred successfully to ${newOwner}. Transaction: ${tx.transactionHash}`, 
+                    'success');
+                
+                // Clear form
+                event.target.reset();
+                
+            } catch (error) {
+                console.error('Error transferring ownership:', error);
+                showMessage('transferMessage', `Error: ${error.message}`, 'error');
+            } finally {
+                transferBtn.disabled = false;
+                transferBtn.innerHTML = 'Transfer Ownership';
+            }
+        }
+        
+        function displayTransactions() {
+            const listEl = document.getElementById('transactionList');
+            
+            if (transactions.length === 0) {
+                listEl.innerHTML = '<p style="text-align: center; color: #666;">No transactions yet</p>';
+                return;
+            }
+            
+            listEl.innerHTML = transactions.map(tx => `
+                <div class="transaction-item">
+                    <div class="tx-info">
+                        <span class="tx-type">${tx.type}</span>
+                        <a href="${CONFIG[currentNetwork].explorer}/tx/${tx.hash}" target="_blank" class="tx-hash">
+                            ${tx.hash.slice(0, 10)}...${tx.hash.slice(-8)}
+                        </a>
+                        ${tx.validatorAddress ? `<small>Validator: ${tx.validatorAddress.slice(0, 8)}...</small>` : ''}
+                    </div>
+                    <span class="tx-status ${tx.status}">${tx.status.toUpperCase()}</span>
+                </div>
+            `).join('');
+        }
+        
+        // Load transactions from localStorage on startup
+        window.addEventListener('load', () => {
+            const savedTx = localStorage.getItem('0g_transactions');
+            if (savedTx) {
+                transactions = JSON.parse(savedTx);
+            }
+        });
+    </script>
+</body>
+</html>

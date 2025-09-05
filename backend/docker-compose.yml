@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: validator-postgres
+    environment:
+      POSTGRES_USER: ${DB_USER:-validator_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-validator_pass}
+      POSTGRES_DB: ${DB_NAME:-validator_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - validator-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-validator_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: validator-backend
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://${DB_USER:-validator_user}:${DB_PASSWORD:-validator_pass}@postgres:5432/${DB_NAME:-validator_db}
+      DB_TYPE: postgres
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-admin123}
+    ports:
+      - "3000:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - validator-network
+    volumes:
+      - ./public:/app/public
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  validator-network:
+    driver: bridge
