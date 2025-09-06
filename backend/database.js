@@ -30,7 +30,7 @@ const initialize = () => {
                     operator_name TEXT NOT NULL,
                     operator_email TEXT NOT NULL,
                     operator_wallet TEXT NOT NULL,
-                    telegram_handle TEXT,
+                    operator_telegram TEXT,
                     
                     -- Request Status
                     status TEXT DEFAULT 'pending',
@@ -114,18 +114,18 @@ const operations = {
                 INSERT INTO delegation_requests (
                     id, moniker, identity, website, security_contact, details,
                     pubkey, signature, commission_rate, withdrawal_fee,
-                    operator_name, operator_email, operator_wallet, telegram_handle,
+                    operator_name, operator_email, operator_wallet, operator_telegram,
                     network
                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             `;
             
-            db.run(sql, [
+            const params = [
                 requestData.id,
                 requestData.moniker,
-                requestData.identity,
-                requestData.website,
-                requestData.security_contact,
-                requestData.details,
+                requestData.identity || null,
+                requestData.website || null,
+                requestData.security_contact || null,
+                requestData.details || null,
                 requestData.pubkey,
                 requestData.signature,
                 requestData.commission_rate,
@@ -133,9 +133,17 @@ const operations = {
                 requestData.operator_name,
                 requestData.operator_email,
                 requestData.operator_wallet,
-                requestData.telegram_handle,
-                requestData.network
-            ], function(err) {
+                requestData.operator_telegram || null,
+                requestData.network || 'mainnet'
+            ];
+            
+            console.log('Inserting with params:', {
+                identity: requestData.identity,
+                security_contact: requestData.security_contact,
+                details: requestData.details
+            });
+            
+            db.run(sql, params, function(err) {
                 if (err) reject(err);
                 else resolve(this.lastID);
             });

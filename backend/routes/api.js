@@ -232,4 +232,111 @@ router.get('/stats', async (req, res) => {
     }
 });
 
+// Public endpoint to get all processed validators (password protected)
+router.get('/validators/processed', async (req, res) => {
+    try {
+        // Check access password
+        const accessPassword = req.query.access_password || req.headers['x-access-password'];
+        const expectedPassword = process.env.API_ACCESS_PASSWORD;
+        
+        if (!expectedPassword) {
+            return res.status(500).json({ 
+                success: false, 
+                error: 'API access password not configured on server' 
+            });
+        }
+        
+        if (!accessPassword || accessPassword !== expectedPassword) {
+            return res.status(401).json({ 
+                success: false, 
+                error: 'Invalid or missing access password' 
+            });
+        }
+        
+        // Get all completed/processed validators
+        const processedRequests = await db.getAllRequests({ status: 'completed' });
+        
+        // For each request, get associated transactions
+        const validatorsWithDetails = await Promise.all(
+            processedRequests.map(async (request) => {
+                const transactions = await db.getTransactions(request.id);
+                
+                return {
+                    // Request details
+                    id: request.id,
+                    request_date: request.request_date,
+                    network: request.network,
+                    status: request.status,
+                    
+                    // Validator information
+                    validator: {
+                        moniker: request.moniker,
+                        identity: request.identity,
+                        website: request.website,
+                        security_contact: request.security_contact,
+                        details: request.details,
+                        validator_address: request.validator_address
+                    },
+                    
+                    // Technical details
+                    technical: {
+                        pubkey: request.pubkey,
+                        signature: request.signature,
+                        commission_rate: request.commission_rate,
+                        withdrawal_fee: request.withdrawal_fee
+                    },
+                    
+                    // Operator information
+                    operator: {
+                        name: request.operator_name,
+                        email: request.operator_email,
+                        wallet: request.operator_wallet,
+                        telegram: request.operator_telegram
+                    },
+                    
+                    // Transaction history
+                    transactions: {
+                        creation_tx: {
+                            hash: request.creation_tx_hash,
+                            date: request.creation_tx_date
+                        },
+                        transfer_tx: {
+                            hash: request.transfer_tx_hash,
+                            date: request.transfer_tx_date
+                        },
+                        all_transactions: transactions.map(tx => ({
+                            hash: tx.tx_hash,
+                            type: tx.tx_type,
+                            from: tx.from_address,
+                            to: tx.to_address,
+                            value: tx.value,
+                            gas_used: tx.gas_used,
+                            status: tx.status,
+                            date: tx.created_date
+                        }))
+                    },
+                    
+                    // Processing metadata
+                    processing: {
+                        reviewer: request.reviewer,
+                        review_date: request.review_date,
+                        notes: request.notes,
+                        last_updated: request.last_updated
+                    }
+                };
+            })
+        );
+        
+        res.json({ 
+            success: true, 
+            count: validatorsWithDetails.length,
+            data: validatorsWithDetails 
+        });
+        
+    } catch (error) {
+        console.error('Error fetching processed validators:', error);
+        res.status(500).json({ success: false, error: error.message });
+    }
+});
+
 module.exports = router;

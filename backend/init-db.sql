@@ -3,27 +3,41 @@
 -- Create delegation_requests table
 CREATE TABLE IF NOT EXISTS delegation_requests (
     id VARCHAR(36) PRIMARY KEY,
+    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
+    -- Validator Information
     moniker VARCHAR(255) NOT NULL,
+    identity VARCHAR(255),
     website VARCHAR(255),
+    security_contact VARCHAR(255),
+    details TEXT,
+    
+    -- Technical Details
     pubkey TEXT NOT NULL UNIQUE,
     signature TEXT NOT NULL,
     commission_rate INTEGER NOT NULL,
-    withdrawal_fee INTEGER NOT NULL,
+    withdrawal_fee VARCHAR(255) NOT NULL,
+    
+    -- Contact Information
     operator_name VARCHAR(255) NOT NULL,
     operator_email VARCHAR(255) NOT NULL,
     operator_wallet VARCHAR(255) NOT NULL,
     operator_telegram VARCHAR(255),
+    
+    -- Request Status
     status VARCHAR(50) DEFAULT 'pending',
     network VARCHAR(50) DEFAULT 'mainnet',
+    notes TEXT,
+    reviewer VARCHAR(255),
+    review_date TIMESTAMP,
+    
+    -- Transaction Details
     validator_address VARCHAR(255),
     creation_tx_hash VARCHAR(255),
     creation_tx_date TIMESTAMP,
     transfer_tx_hash VARCHAR(255),
     transfer_tx_date TIMESTAMP,
-    notes TEXT,
-    reviewer VARCHAR(255),
-    review_date TIMESTAMP,
-    request_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    
     last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
