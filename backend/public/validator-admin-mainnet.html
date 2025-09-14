@@ -904,7 +904,19 @@
                 };
                 transactions.push(txRecord);
                 localStorage.setItem('0g_mainnet_transactions', JSON.stringify(transactions));
-                
+
+                // Update transaction in database
+                await updateTransactionInDB({
+                    validator_address: validatorAddress,
+                    creation_tx_hash: tx.transactionHash,
+                    tx_hash: tx.transactionHash,
+                    tx_type: 'VALIDATOR_CREATION',
+                    from_address: currentAccount,
+                    to_address: stakingContract._address,
+                    network: 'mainnet',
+                    status: 'success'
+                });
+
                 showMessage('createMessage', 
                     `✅ MAINNET Validator created successfully! Address: ${validatorAddress}. ` +
                     `Transaction: ${tx.transactionHash}. ` +
@@ -976,7 +988,18 @@
                 };
                 transactions.push(txRecord);
                 localStorage.setItem('0g_mainnet_transactions', JSON.stringify(transactions));
-                
+
+                // Update transaction in database
+                await updateTransactionInDB({
+                    transfer_tx_hash: tx.transactionHash,
+                    tx_hash: tx.transactionHash,
+                    tx_type: 'OWNERSHIP_TRANSFER',
+                    from_address: currentAccount,
+                    to_address: newOwner,
+                    network: 'mainnet',
+                    status: 'success'
+                });
+
                 showMessage('transferMessage', 
                     `✅ MAINNET Ownership transferred successfully to ${newOwner}. Transaction: ${tx.transactionHash}`, 
                     'success');
