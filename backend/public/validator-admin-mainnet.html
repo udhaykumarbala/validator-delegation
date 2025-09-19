@@ -832,7 +832,7 @@
                 };
                 
                 // Convert commission rate to basis points (multiply by 100)
-                const commissionRate = Math.floor(parseFloat(formData.get('commissionRate')) * 100);
+                const commissionRate = Math.floor(parseFloat(formData.get('commissionRate')) * 10000);
                 const withdrawalFeeInGwei = formData.get('withdrawalFee');
                 const pubkey = formData.get('pubkey');
                 const signature = formData.get('signature');
